@@ -4,22 +4,22 @@ Data_Preparation:
 
 Train:
   Random_Forest:
-    n_estimators: 479
+    n_estimators: 177
     criterion: 'squared_error'
-    max_depth: 17
+    max_depth: 14
     max_features: 1
-    min_samples_split: 9
+    min_samples_split: 10
     min_samples_leaf: 2
-    max_samples: 0.6603673526197066
+    max_samples: 0.8349568486026413
     verbose: 1
     n_jobs: -1
   
   LightGBM:
-    n_estimators: 154
-    max_depth: 27
-    learning_rate: 0.22234435854395157
-    subsample: 0.7592213724048168
-    min_child_weight: 20
-    min_split_gain: 0.004604680609280751
-    reg_lambda: 97.81002379097947
+    n_estimators: 55
+    max_depth: 38
+    learning_rate: 0.3793573829129576
+    subsample: 0.8823899203273144
+    min_child_weight: 18
+    min_split_gain: 0.0366641615279395
+    reg_lambda: 39.450748935859494
     n_jobs: -1
