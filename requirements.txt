@@ -6,4 +6,3 @@ joblib
 dvc
 mlflow
 dagshub
-pickle
