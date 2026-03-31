@@ -184,7 +184,7 @@ Used **MLflow** for:
 ## How to Run
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/rahulpatel0628/swiggy-delivery-time-prediction
 cd swiggy-delivery-time-prediction
 
 python -m venv myenv
