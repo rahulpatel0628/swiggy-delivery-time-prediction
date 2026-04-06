@@ -46,7 +46,7 @@ jobs:
           MLFLOW_TRACKING_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           MLFLOW_TRACKING_USERNAME: rahulpatel16092005
       run: |
-          pytest tests/test_model_performance.py
+          pytest tests/test_model_perf.py
 
     - name: Promote model to production
       env:
