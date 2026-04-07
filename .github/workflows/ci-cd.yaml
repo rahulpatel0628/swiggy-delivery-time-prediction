@@ -93,5 +93,5 @@ jobs:
             docker pull 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
             docker stop swiggy-delivery-time-prediction || true
             docker rm swiggy-delivery-time-prediction || true
-            docker run -d -p 8000:5000 -e DAGSHUB_PAT=${{ secrets.DAGSHUB_TOKEN }} --name swiggy-delivery-time-prediction 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
+            docker run -d -p 8000:8000 -e DAGSHUB_PAT=${{ secrets.DAGSHUB_TOKEN }} --name swiggy-delivery-time-prediction 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
 
