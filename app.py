@@ -1,6 +1,4 @@
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from pydantic import BaseModel
 from sklearn.pipeline import Pipeline
 import uvicorn
@@ -8,8 +6,8 @@ import pandas as pd
 import mlflow
 import json
 import joblib
-import os
 from mlflow import MlflowClient
+from fastapi.responses import FileResponse
 from sklearn import set_config
 from scripts.data_clean_utils import perform_data_cleaning
 
@@ -23,7 +21,6 @@ import mlflow.client
 dagshub.init(repo_owner='rahulpatel16092005', 
              repo_name='swiggy-delivery-time-prediction', 
              mlflow=True)
-
 
 # set the mlflow tracking server
 mlflow.set_tracking_uri("https://dagshub.com/rahulpatel16092005/swiggy-delivery-time-prediction.mlflow")
@@ -50,7 +47,6 @@ class Data(BaseModel):
     Festival: str
     City: str
 
-
     
     
 def load_model_information(file_path):
@@ -64,43 +60,12 @@ def load_transformer(transformer_path):
     transformer = joblib.load(transformer_path)
     return transformer
 
-
-
-# columns to preprocess in data
-num_cols = ["age",
-            "ratings",
-            "pickup_time_minutes",
-            "distance"]
-
-nominal_cat_cols = ['weather',
-                    'type_of_order',
-                    'type_of_vehicle',
-                    "festival",
-                    "city_type",
-                    "is_weekend",
-                    "order_time_of_day"]
-
-ordinal_cat_cols = ["traffic","distance_type"]
-
-#mlflow client
 client = MlflowClient()
 
-# load the model info to get the model name
 model_name = load_model_information("run_information.json")['model_name']
-
-# stage of the model
-stage = "Staging"
-
-# get the latest model version
-# latest_model_ver = client.get_latest_versions(name=model_name,stages=[stage])
-# print(f"Latest model in production is version {latest_model_ver[0].version}")
-
-# load model path
+stage = "Production"
 model_path = f"models:/{model_name}/{stage}"
-
-# load the latest model from model registry
 model = mlflow.sklearn.load_model(model_path)
-print("Model loaded successfully from DagsHub. Server is starting...")
 
 # load the preprocessor
 preprocessor_path = "models/preprocessor.joblib"
@@ -115,23 +80,25 @@ model_pipe = Pipeline(steps=[
 # create the app
 app = FastAPI()
 
-# Mount static files
-#app.mount("/static", StaticFiles(directory="static"), name="static")
+from fastapi.middleware.cors import CORSMiddleware
 
-# Templates setup
-#templates = Jinja2Templates(directory="templates")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # create the home endpoint
 @app.get(path="/")
 def home():
-    return "Welcome to Welcome to Swiggy Delivery Time Prediction API. Use the /predict endpoint to get predictions."
+    return FileResponse("templates/home.html")
 
 # create the predict endpoint
 @app.post(path="/predict")
 def do_predictions(data: Data):
-    pred_data = pd.DataFrame(
-        { 'ID': data.ID,
+    pred_data = pd.DataFrame({
+        'ID': data.ID,
         'Delivery_person_ID': data.Delivery_person_ID,
         'Delivery_person_Age': data.Delivery_person_Age,
         'Delivery_person_Ratings': data.Delivery_person_Ratings,
@@ -151,15 +118,12 @@ def do_predictions(data: Data):
         'Festival': data.Festival,
         'City': data.City
         },index=[0]
-        
     )
-    # clean the raw input data
+   
     cleaned_data = perform_data_cleaning(pred_data)
-    # get the predictions
     predictions = model_pipe.predict(cleaned_data)[0]
 
     return predictions
-   
-   
+
 if __name__ == "__main__":
-    uvicorn.run(app="app:app",host="localhost",port=8000)
+    uvicorn.run(app="app:app",host="0.0.0.0",port=8000)

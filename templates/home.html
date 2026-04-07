@@ -1,0 +1,607 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Swiggy Delivery Time Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f7f4;
+      --surface: #ffffff;
+      --surface-2: #f2f0ec;
+      --border: rgba(0,0,0,0.1);
+      --border-hover: rgba(0,0,0,0.22);
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b66;
+      --text-hint: #a0a09a;
+      --accent: #FF6B35;
+      --accent-hover: #e85a25;
+      --accent-soft: rgba(255, 107, 53, 0.1);
+      --danger-bg: #fff0f0;
+      --danger-border: rgba(200,50,50,0.25);
+      --danger-text: #a32d2d;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1918;
+        --surface: #232220;
+        --surface-2: #2c2b28;
+        --border: rgba(255,255,255,0.1);
+        --border-hover: rgba(255,255,255,0.22);
+        --text-primary: #f0ede8;
+        --text-secondary: #a0a099;
+        --text-hint: #6b6b66;
+        --accent-soft: rgba(255, 107, 53, 0.15);
+        --danger-bg: #2c1515;
+        --danger-border: rgba(200,80,80,0.3);
+        --danger-text: #f09595;
+      }
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .logo-badge {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+    }
+
+    .logo-badge svg { width: 24px; height: 24px; }
+
+    .header-text h1 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-label:not(:first-child) {
+      margin-top: 1.25rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 500px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    input, select {
+      height: 38px;
+      padding: 0 10px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input::placeholder { color: var(--text-hint); }
+
+    input:hover, select:hover { border-color: var(--border-hover); }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a099' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+      cursor: pointer;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      height: 46px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.1px;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(255, 107, 53, 0.28);
+    }
+
+    .submit-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.36);
+    }
+
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled {
+      background: var(--border-hover);
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Result */
+    .result-card {
+      display: none;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      animation: slideUp 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 3px 3px 0 0;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-label {
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      margin-bottom: 10px;
+    }
+
+    .result-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .result-unit {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .result-meta {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 0.5px solid var(--border);
+    }
+
+    .meta-item {
+      text-align: center;
+      flex: 1;
+      padding: 0 12px;
+    }
+
+    .meta-item:not(:last-child) {
+      border-right: 0.5px solid var(--border);
+    }
+
+    .meta-val {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .meta-key {
+      font-size: 11px;
+      color: var(--text-hint);
+      margin-top: 3px;
+      letter-spacing: 0.4px;
+    }
+
+    /* Error */
+    .error-card {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--danger-bg);
+      border: 0.5px solid var(--danger-border);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      color: var(--danger-text);
+      line-height: 1.5;
+    }
+
+    /* API URL config */
+    .config-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1rem;
+      background: var(--surface-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 12px;
+    }
+
+    .config-row span {
+      font-size: 11.5px;
+      color: var(--text-hint);
+      white-space: nowrap;
+    }
+
+    .config-row input {
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding-left: 0;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .config-row input:focus {
+      box-shadow: none;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="white" opacity="0.9"/>
+        <circle cx="12" cy="9" r="2.5" fill="#FF6B35"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Swiggy Delivery Time Predictor</h1>
+      <p>Estimate delivery time based on order and location details</p>
+    </div>
+  </div>
+
+  <!-- API URL config -->
+  <div class="config-row">
+    <span>API</span>
+    <input type="text" id="apiUrl" value="http://localhost:8000/predict" spellcheck="false"/>
+  </div>
+
+  <div class="card">
+
+    <div class="section-label">Delivery Person</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Order ID</label>
+        <input type="text" id="ID" placeholder="e.g. 9a7272d6" value="9a7272d6"/>
+      </div>
+      <div class="field">
+        <label>Person ID</label>
+        <input type="text" id="Delivery_person_ID" placeholder="e.g. BANGRES19DEL02" value="BANGRES19DEL02"/>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:10px">
+      <div class="field">
+        <label>Age</label>
+        <input type="text" id="Delivery_person_Age" placeholder="e.g. 29" value="29"/>
+      </div>
+      <div class="field">
+        <label>Ratings</label>
+        <input type="text" id="Delivery_person_Ratings" placeholder="e.g. 4.9" value="4.9"/>
+      </div>
+    </div>
+
+    <div class="section-label">Restaurant Location</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" step="any" id="Restaurant_latitude" placeholder="e.g. 12.914264" value="12.914264"/>
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" step="any" id="Restaurant_longitude" placeholder="e.g. 77.678400" value="77.678400"/>
+      </div>
+    </div>
+
+    <div class="section-label">Delivery Location</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" step="any" id="Delivery_location_latitude" placeholder="e.g. 13.014264" value="13.014264"/>
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" step="any" id="Delivery_location_longitude" placeholder="e.g. 77.778400" value="77.778400"/>
+      </div>
+    </div>
+
+    <div class="section-label">Order Details</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Order Date</label>
+        <input type="text" id="Order_Date" placeholder="DD-MM-YYYY" value="13-03-2022"/>
+      </div>
+      <div class="field">
+        <label>Type of Order</label>
+        <select id="Type_of_order">
+          <option>Snack</option>
+          <option>Meal</option>
+          <option>Drinks</option>
+          <option>Buffet</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:10px">
+      <div class="field">
+        <label>Time Ordered</label>
+        <input type="text" id="Time_Orderd" placeholder="HH:MM:SS" value="11:30:00"/>
+      </div>
+      <div class="field">
+        <label>Time Picked</label>
+        <input type="text" id="Time_Order_picked" placeholder="HH:MM:SS" value="11:45:00"/>
+      </div>
+      <div class="field">
+        <label>Multiple Deliveries</label>
+        <input type="text" id="multiple_deliveries" placeholder="e.g. 0" value="0"/>
+      </div>
+    </div>
+
+    <div class="section-label">Conditions</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Weather</label>
+        <select id="Weatherconditions">
+          <option>conditions Sunny</option>
+          <option>conditions Cloudy</option>
+          <option>conditions Windy</option>
+          <option>conditions Foggy</option>
+          <option>conditions Sandstorms</option>
+          <option>conditions Stormy</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Traffic Density</label>
+        <select id="Road_traffic_density">
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+          <option>Jam</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Vehicle Condition</label>
+        <select id="Vehicle_condition">
+          <option value="0">0 — Poor</option>
+          <option value="1">1 — Fair</option>
+          <option value="2" selected>2 — Good</option>
+          <option value="3">3 — Excellent</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:10px">
+      <div class="field">
+        <label>Vehicle Type</label>
+        <select id="Type_of_vehicle">
+          <option>motorcycle</option>
+          <option>scooter</option>
+          <option>electric_scooter</option>
+          <option>bicycle</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Festival</label>
+        <select id="Festival">
+          <option>No</option>
+          <option>Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>City</label>
+        <select id="City">
+          <option>Urban</option>
+          <option>Metropolitian</option>
+          <option>Semi-Urban</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="predictBtn" onclick="predict()">
+      <span id="btn-inner">Predict Delivery Time</span>
+    </button>
+
+    <div class="error-card" id="errorCard"></div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-label">Estimated Delivery Time</div>
+    <div class="result-time" id="resultTime">—</div>
+    <div class="result-unit">minutes</div>
+    <div class="result-meta">
+      <div class="meta-item">
+        <div class="meta-val" id="metaTraffic">—</div>
+        <div class="meta-key">Traffic</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-val" id="metaWeather">—</div>
+        <div class="meta-key">Weather</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-val" id="metaVehicle">—</div>
+        <div class="meta-key">Vehicle</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  async function predict() {
+    const btn = document.getElementById('predictBtn');
+    const btnInner = document.getElementById('btn-inner');
+    const errorCard = document.getElementById('errorCard');
+    const resultCard = document.getElementById('resultCard');
+    const apiUrl = document.getElementById('apiUrl').value.trim();
+
+    const getVal = id => document.getElementById(id).value.trim();
+
+    const payload = {
+      ID: getVal('ID'),
+      Delivery_person_ID: getVal('Delivery_person_ID'),
+      Delivery_person_Age: getVal('Delivery_person_Age'),
+      Delivery_person_Ratings: getVal('Delivery_person_Ratings'),
+      Restaurant_latitude: parseFloat(getVal('Restaurant_latitude')),
+      Restaurant_longitude: parseFloat(getVal('Restaurant_longitude')),
+      Delivery_location_latitude: parseFloat(getVal('Delivery_location_latitude')),
+      Delivery_location_longitude: parseFloat(getVal('Delivery_location_longitude')),
+      Order_Date: getVal('Order_Date'),
+      Time_Orderd: getVal('Time_Orderd'),
+      Time_Order_picked: getVal('Time_Order_picked'),
+      Weatherconditions: getVal('Weatherconditions'),
+      Road_traffic_density: getVal('Road_traffic_density'),
+      Vehicle_condition: parseInt(getVal('Vehicle_condition')),
+      Type_of_order: getVal('Type_of_order'),
+      Type_of_vehicle: getVal('Type_of_vehicle'),
+      multiple_deliveries: getVal('multiple_deliveries'),
+      Festival: getVal('Festival'),
+      City: getVal('City')
+    };
+
+    btn.disabled = true;
+    btnInner.innerHTML = '<div class="spinner"></div>';
+    errorCard.style.display = 'none';
+    resultCard.style.display = 'none';
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Server error ${res.status}: ${err}`);
+      }
+
+      const data = await res.json();
+      const minutes = Math.round(typeof data === 'number' ? data : (data.prediction ?? data));
+
+      document.getElementById('resultTime').textContent = minutes;
+      document.getElementById('metaTraffic').textContent = payload.Road_traffic_density;
+      document.getElementById('metaWeather').textContent = payload.Weatherconditions.replace('conditions ', '');
+      document.getElementById('metaVehicle').textContent = payload.Type_of_vehicle;
+
+      resultCard.style.display = 'block';
+      resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      errorCard.textContent = 'Could not reach the prediction server. Make sure FastAPI is running and CORS is enabled. — ' + err.message;
+      errorCard.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btnInner.textContent = 'Predict Delivery Time';
+    }
+  }
+</script>
+</body>
+</html>

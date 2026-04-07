@@ -18,6 +18,7 @@ COPY app.py ./
 COPY ./models/preprocessor.joblib ./models/preprocessor.joblib
 COPY ./scripts/data_clean_utils.py ./scripts/data_clean_utils.py
 COPY ./run_information.json ./
+COPY ./templates/home.html ./templates/home.html
 
 # expose the port
 EXPOSE 8000
