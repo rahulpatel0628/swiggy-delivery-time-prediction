@@ -3,7 +3,7 @@ name: CI
 on: push
 
 jobs:
-  Testing:
+  CI-CD:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY}}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: eu-north-1
 
     - name: DVC Pull
@@ -55,4 +55,43 @@ jobs:
           MLFLOW_TRACKING_USERNAME: rahulpatel16092005
       run: |
           python scripts/promot_model_to_prod.py
+
+    - name: Login ECR
+      if: success()
+      run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_KEY }}
+          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 065882629527.dkr.ecr.eu-north-1.amazonaws.com
+        
+    - name: Build Docker image
+      if: success()
+      run: |
+          docker build -t swiggy-delivery-time-prediction .
+        
+    - name: Tag Docker image
+      if: success()
+      run: |
+          docker tag swiggy-delivery-time-prediction:latest 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
+        
+    - name: Push Docker image to ECR
+      run: |
+          docker push 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
+
+    - name: Deploy to EC2
+      if: success()
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_KEY }}
+            aws configure set region eu-north-1
+            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 065882629527.dkr.ecr.eu-north-1.amazonaws.com
+        
+            docker pull 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
+            docker stop swiggy-delivery-time-prediction || true
+            docker rm swiggy-delivery-time-prediction || true
+            docker run -d -p 8000:5000 -e DAGSHUB_PAT=${{ secrets.DAGSHUB_TOKEN }} --name swiggy-delivery-time-prediction 065882629527.dkr.ecr.eu-north-1.amazonaws.com/swiggy-delivery-time-prediction:latest
 

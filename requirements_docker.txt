@@ -1,0 +1,8 @@
+fastapi[standard]
+scikit-learn
+pandas
+numpy
+mlflow
+joblib
+dagshub
+lightgbm
